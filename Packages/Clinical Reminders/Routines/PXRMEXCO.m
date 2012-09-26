@@ -1,0 +1,53 @@
+PXRMEXCO ; SLC/PKR/PJH - Exchange File component order. ;06/11/2003
+ ;;2.0;CLINICAL REMINDERS;;Feb 04, 2005
+ ;======================================================
+CORDER(IEN,UCOM,NUMCMPNT,COMORDR) ;Build the component order for
+ ;display and install.
+ N EXTYPE
+ S EXTYPE=$G(^PXD(811.8,IEN,115))
+ I EXTYPE="" S EXTYPE="REMINDER"
+ S NUMCMPNT=0
+ I EXTYPE="EXTRACT" D EXTRACT(.UCOM,.NUMCMPNT,.COMORDR) Q
+ I EXTYPE="REMINDER" D REM(.UCOM,.NUMCMPNT,.COMORDR)
+ Q
+ ;
+ ;======================================================
+EXTRACT(UCOM,NUMCMPNT,COMORDR) ;Build the component order for an
+ ;extract entry.
+ N FILENAME,FILENUM
+ F FILENUM=810.9,811.5,810.8,810.7,810.4,810.2 D
+ . S FILENAME=$$GET1^DID(FILENUM,"","","NAME") Q:FILENAME=""  Q:'$D(UCOM(FILENAME))
+ . S NUMCMPNT=NUMCMPNT+1
+ . S COMORDR(NUMCMPNT,FILENAME)=""
+ . K UCOM(FILENAME)
+ Q
+ ;
+ ;======================================================
+REM(UCOM,NUMCMPNT,COMORDR) ;Build the component order for a reminder.
+ ;For reminders the order is Routines, Sponsors, ...,
+ ;Definition, Dialog. Where ... stands for all other components.
+ N TYPE
+ I $D(UCOM("ROUTINE")) D
+ . S NUMCMPNT=NUMCMPNT+1
+ . S COMORDR(NUMCMPNT,"ROUTINE")=""
+ . K UCOM("ROUTINE")
+ I $D(UCOM("REMINDER SPONSOR")) D
+ . S NUMCMPNT=NUMCMPNT+1
+ . S COMORDR(NUMCMPNT,"REMINDER SPONSOR")=""
+ . K UCOM("REMINDER SPONSOR")
+ S TYPE=""
+ F  S TYPE=$O(UCOM(TYPE)) Q:TYPE=""  D
+ . I (TYPE="REMINDER DEFINITION")!(TYPE="REMINDER DIALOG") Q
+ . S NUMCMPNT=NUMCMPNT+1
+ . S COMORDR(NUMCMPNT,TYPE)=""
+ . K UCOM(TYPE)
+ I $D(UCOM("REMINDER DEFINITION")) D
+ . S NUMCMPNT=NUMCMPNT+1
+ . S COMORDR(NUMCMPNT,"REMINDER DEFINITION")=""
+ . K UCOM("REMINDER DEFINITION")
+ I $D(UCOM("REMINDER DIALOG")) D
+ . S NUMCMPNT=NUMCMPNT+1
+ . S COMORDR(NUMCMPNT,"REMINDER DIALOG")=""
+ . K UCOM("REMINDER DIALOG")
+ Q
+ ;
